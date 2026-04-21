@@ -8,7 +8,7 @@ OLLAMA_URL = "http://ollama-service:11434/api/generate"
 @app.get("/")
 def health():
     return {"status": "running"}
-
+    
 @app.post("/chat")
 def chat(prompt: str):
     response = requests.post(OLLAMA_URL, json={
@@ -16,4 +16,7 @@ def chat(prompt: str):
         "prompt": prompt,
         "stream": False
     })
-    return response.json()
+
+    data = response.json()
+    return {"answer": data["response"]}
+
