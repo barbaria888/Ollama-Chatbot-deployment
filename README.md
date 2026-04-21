@@ -1,197 +1,288 @@
-# Ollama Chatbot Deployment (FastAPI + Ollama + Kubernetes)
-
-A minimal, production-oriented example of deploying an **Ollama-backed chatbot** in Kubernetes.
-
-This repo contains:
-- A **FastAPI** application that exposes a **WebSocket chat endpoint** and streams model output back to the client.
-- Kubernetes manifests to deploy **Ollama** (model runtime) and the **API** service.
-- A Dockerfile to containerize the API.
 
 ---
 
-## What you get
+# 🚀 Ollama Chatbot Deployment (FastAPI + Ollama + Kubernetes)
 
-- **Streaming chat** over WebSocket: `ws://.../ws/chat`
-- **Kubernetes-ready** setup with:
-  - `ollama/ollama` deployment + internal service (`ollama-service:11434`)
-  - API deployment + NodePort service for external access
-- **Simple architecture**: Client → FastAPI → Ollama `/api/generate` → streamed tokens → Client
+A production-style, Kubernetes-native AI chatbot system using **FastAPI + WebSockets + Ollama (TinyLlama)** with CI/CD-based Docker builds and scalable deployment architecture.
 
 ---
 
-## Architecture
+## ⚡ What this project demonstrates
 
-**In-cluster communication**
-- The API calls Ollama using Kubernetes DNS:
-  - `http://ollama-service:11434/api/generate`
-
-**Streaming**
-- The API uses Ollama’s `stream: true` responses and forwards chunks to the WebSocket client until it sends a final `"[DONE]"`.
-
----
-
-## Repo structure
-
-- `api/`
-  - `main.py` — FastAPI app (WebSocket endpoint)
-  - `requirements.txt` — `fastapi`, `uvicorn`, `requests`
-  - `Dockerfile` — runs `uvicorn main:app --host 0.0.0.0 --port 8000`
-- `k8s/`
-  - `ollama-deployment.yaml` — deploys `ollama/ollama` with CPU/memory requests/limits and an `emptyDir` volume
-  - `ollama-service.yaml` — ClusterIP service named `ollama-service` on port `11434`
-  - `api-deployment.yaml` — deploys the API (`hardik0811/ai-app:latest`) with 2 replicas
-  - `api-service.yaml` — NodePort service exposing the API on port `80` → `8000`
+* Real-time **streaming AI chat (WebSocket-based)**
+* Self-hosted **LLM inference (Ollama + TinyLlama)**
+* Kubernetes-native **microservice architecture**
+* CI/CD-driven **Docker build & deployment workflow**
+* Scalable API layer with **multiple replicas**
+* Production-style **service communication via Kubernetes DNS**
 
 ---
 
-## API: Chatting Endpoints
+## 🧠 System Architecture
 
-### WebSocket Chat (streaming)
+```text
+Client (Browser / websocat)
+        ↓
+FastAPI (WebSocket Gateway)
+        ↓
+Kubernetes Service (ai-api-service)
+        ↓
+AI API Pods (ai-app)
+        ↓
+Ollama Service (ollama:11434)
+        ↓
+TinyLlama Model (CPU inference)
+        ↓
+Streamed response back to client
+```
 
-**Endpoint**
-- `GET /ws/chat` (WebSocket upgrade)
+---
 
-**How it works**
-- Client sends a text message (your prompt)
-- Server forwards it to Ollama `/api/generate` with:
-  - `model: "tinyllama"`
-  - `prompt: <your message>`
-  - `stream: true`
-- Server streams partial text back as WebSocket messages (chunked), then sends:
-  - `"[DONE]"`
+## 🔥 Key Features
 
-**WebSocket message flow**
-1. Client → Server: `"Hello, who are you?"`
-2. Server → Client: `"I am ..."`
-3. Server → Client: `" an AI ..."`
-4. ...
-5. Server → Client: `"[DONE]"`
+* ⚡ Real-time token streaming (ChatGPT-like typing effect)
+* ☸️ Fully Kubernetes-deployed AI stack
+* 🧠 Local LLM inference (no external APIs)
+* 🔁 Horizontal scaling (API replicas)
+* 📡 Internal service communication via DNS (`ollama-service`)
+* 🧪 CLI + browser WebSocket support
+* 🔧 CI/CD-based Docker image build & push (no manual deployment needed)
 
-**Quick test from the browser console**
+---
+
+## 📁 Repo Structure
+
+```text
+api/
+ ├── main.py              # FastAPI WebSocket server
+ ├── requirements.txt     # fastapi, uvicorn[standard], websockets, requests
+ ├── Dockerfile           # container for API (used in CI only)
+
+k8s/
+ ├── ollama-deployment.yaml
+ ├── ollama-service.yaml
+ ├── api-deployment.yaml
+ ├── api-service.yaml
+```
+
+---
+
+## 🧩 Core Design
+
+### 🧠 Ollama Layer
+
+* Runs `ollama/ollama` container
+* Hosts `tinyllama` model
+* Exposes: `http://ollama-service:11434`
+
+### ⚙️ API Layer (FastAPI)
+
+* WebSocket endpoint: `/ws/chat`
+* Forwards prompts to Ollama
+* Streams response back token-by-token
+
+### 🌐 Client Layer
+
+* Browser WebSocket OR CLI (`websocat`)
+* Receives live AI responses
+
+---
+
+## 💬 API Endpoints
+
+### 1. WebSocket Chat (Main Feature)
+
+```text
+ws://<host>/ws/chat
+```
+
+### Flow:
+
+1. Client sends prompt
+2. API calls Ollama (`stream: true`)
+3. Response is streamed back instantly
+
+---
+
+### 🧪 Browser test
+
 ```js
 const ws = new WebSocket("ws://localhost:8000/ws/chat");
 
-ws.onmessage = (e) => console.log("recv:", e.data);
-ws.onopen = () => ws.send("Say hi in one sentence");
-```
-
-> If you are accessing via Kubernetes NodePort, replace `localhost:8000` with `http://<NODE_IP>:<NODE_PORT>` (and use `ws://`).
-
----
-
-### Health endpoint
-
-**Endpoint**
-- `GET /`
-
-**Response**
-```json
-{ "status": "running" }
+ws.onmessage = (e) => console.log("AI:", e.data);
+ws.onopen = () => ws.send("Explain Kubernetes simply");
 ```
 
 ---
 
-## Kubernetes deployment
+### 🧪 CLI test
 
-### 1) Deploy everything
+```bash
+websocat ws://localhost:8000/ws/chat
+```
 
-From repo root:
+---
+
+## ☸️ Kubernetes Deployment
+
+### 🚀 Deploy everything
+
 ```bash
 kubectl apply -f k8s/
 ```
 
-Verify:
+---
+
+### 📊 Verify
+
 ```bash
 kubectl get pods
 kubectl get svc
 ```
 
-You should see services:
-- `ollama-service` (internal, port `11434`)
-- `ai-api-service` (NodePort, port `80` → container `8000`)
+Expected services:
+
+* `ollama-service` (ClusterIP)
+* `ai-api-service` (NodePort)
 
 ---
 
-### 2) Access the API externally (NodePort)
+### 🌐 Access API (local dev)
 
-Get the assigned node port:
+```bash
+kubectl port-forward svc/ai-api-service 8000:80
+```
+
+Then:
+
+* HTTP: `http://localhost:8000`
+* WebSocket: `ws://localhost:8000/ws/chat`
+
+---
+
+### 🌍 Access via NodePort
+
 ```bash
 kubectl get svc ai-api-service
 ```
 
 Then:
-- Health: `http://<NODE_IP>:<NODE_PORT>/`
-- WebSocket: `ws://<NODE_IP>:<NODE_PORT>/ws/chat`
 
-If using **minikube**:
-```bash
-minikube service ai-api-service --url
+```text
+http://<NODE_IP>:<NODE_PORT>
+ws://<NODE_IP>:<NODE_PORT>/ws/chat
 ```
 
-Use the returned URL as your base.
-
----
-}
-🐳 Docker (INFO ONLY)
-
-Docker build/push is handled by CI pipeline.
-
-The Dockerfile exists only for CI:
-
-api/Dockerfile
-
-Local build is optional for debugging only:
-
-docker build -t ai-api .
-📦 Resources
-Ollama
-CPU: 1–2 cores
-RAM: 3–6GB
-Storage: ephemeral (emptyDir)
-API
-replicas: 2
-CPU: 250m–500m
-RAM: 256–512Mi
-
-> Important: The API code is configured to call `http://ollama-service:11434/api/generate`, which is meant for Kubernetes. If you run Docker locally without Kubernetes DNS, the API won’t be able to reach Ollama unless you adapt the URL.
-
 ---
 
-## Model notes
+## 🐳 CI/CD (IMPORTANT)
 
-The API requests this model:
-- `tinyllama`
+### ❗ Docker build is NOT manual
 
-Make sure your Ollama instance has it available (pulled). If the model isn’t present, Ollama will error.
+This project uses **CI pipeline automation**:
 
----
+### Pipeline handles:
 
-## Troubleshooting
+* Docker build
+* Image tagging
+* Push to DockerHub
+* Kubernetes rollout update
 
-### Ollama is running but responses fail
-Common causes:
-❌ WebSocket connects but no response
+### Manual build (only for debugging):
 
-Check:
 ```bash
-kubectl get pods
-kubectl logs deploy/ollama
-kubectl logs deploy/ai-app
+docker build -t <image>:latest .
+docker push <image>:latest
 ```
-❌ Model not found
 
-Fix:
+---
+
+## 📦 Resources & Limits
+
+### Ollama (LLM Runtime)
+
+* CPU: 1–2 cores
+* RAM: 3–6 GB
+* Storage: ephemeral (`emptyDir`)
+
+### API Layer
+
+* Replicas: 2
+* CPU: 250m–500m
+* RAM: 256–512Mi
+
+---
+
+## 🧠 Model Configuration
+
+Default model:
+
+```text
+tinyllama
+```
+
+Ensure model exists:
+
 ```bash
 kubectl exec -it deploy/ollama -- ollama pull tinyllama
 ```
-### API image mismatch
-`k8s/api-deployment.yaml` uses:
-- `hardik0811/ai-app:latest`
-
-If you build your own image, update that field to your image name/tag.
 
 ---
 
-## License
+## 🧪 Troubleshooting
 
-MIT (see `LICENSE`).
+### ❌ WebSocket not working
+
+Fix:
+
+```txt
+Ensure uvicorn[standard] is installed
+```
+
+---
+
+### ❌ Ollama not reachable
+
+```bash
+kubectl exec -it deploy/ai-app -- curl http://ollama-service:11434/api/tags
+```
+
+---
+
+### ❌ Model issues
+
+```bash
+kubectl logs deploy/ollama
+```
+
+---
+
+### ❌ API image mismatch
+
+Update:
+
+```yaml
+image: hardk/ai-app:latest
+```
+
+---
+
+## This is not just a chatbot.
+
+It is a:
+* Kubernetes-native inference platform (CPU Only)
+* Streaming WebSocket API service
+* CI/CD-driven deployment pipeline
+---
+
+## 🚀 Future upgrades
+
+* Redis chat memory (multi-turn context)
+* Ingress + TLS WebSockets (production exposure)
+* Prometheus + Grafana observability
+* React ChatGPT UI frontend
+* Multi-model switching (Mistral, Llama, etc.)
+* Horizontal autoscaling (HPA)
+
+---
+
