@@ -131,21 +131,27 @@ minikube service ai-api-service --url
 Use the returned URL as your base.
 
 ---
+}
+🐳 Docker (INFO ONLY)
 
-## Docker (API)
+Docker build/push is handled by CI pipeline.
 
-A Dockerfile is included at `api/Dockerfile`.
+The Dockerfile exists only for CI:
 
-### Build
-```bash
-cd api
-docker build -t ollama-chatbot-api:local .
-```
+api/Dockerfile
 
-### Run
-```bash
-docker run --rm -p 8000:8000 ollama-chatbot-api:local
-```
+Local build is optional for debugging only:
+
+docker build -t ai-api .
+📦 Resources
+Ollama
+CPU: 1–2 cores
+RAM: 3–6GB
+Storage: ephemeral (emptyDir)
+API
+replicas: 2
+CPU: 250m–500m
+RAM: 256–512Mi
 
 > Important: The API code is configured to call `http://ollama-service:11434/api/generate`, which is meant for Kubernetes. If you run Docker locally without Kubernetes DNS, the API won’t be able to reach Ollama unless you adapt the URL.
 
@@ -160,39 +166,24 @@ Make sure your Ollama instance has it available (pulled). If the model isn’t p
 
 ---
 
-## Resources / sizing (Kubernetes)
-
-From the manifests:
-
-**Ollama**
-- requests: `cpu: 1`, `memory: 3Gi`
-- limits: `cpu: 2`, `memory: 6Gi`
-- storage: `emptyDir` mounted at `/root/.ollama`  
-  (data is ephemeral; restarting the pod can remove downloaded models)
-
-**API**
-- replicas: `2`
-- requests: `cpu: 250m`, `memory: 256Mi`
-- limits: `cpu: 500m`, `memory: 512Mi`
-
----
-
 ## Troubleshooting
 
-### WebSocket connects but no response
-- Ollama may not be reachable from the API.
+### Ollama is running but responses fail
+Common causes:
+❌ WebSocket connects but no response
+
 Check:
 ```bash
 kubectl get pods
 kubectl logs deploy/ollama
 kubectl logs deploy/ai-app
 ```
+❌ Model not found
 
-### Ollama is running but responses fail
-Common causes:
-- The model `tinyllama` is not available in Ollama yet
-- The Ollama pod restarted and lost its model cache (because `emptyDir` is ephemeral)
-
+Fix:
+```bash
+kubectl exec -it deploy/ollama -- ollama pull tinyllama
+```
 ### API image mismatch
 `k8s/api-deployment.yaml` uses:
 - `hardik0811/ai-app:latest`
