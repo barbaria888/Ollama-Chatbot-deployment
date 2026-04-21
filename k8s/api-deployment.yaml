@@ -1,20 +1,20 @@
 apiVersion: apps/v1
 kind: Deployment
 metadata:
-  name: AI-app
+  name: ai-app
 spec:
   replicas: 2
   selector:
     matchLabels:
-      app: Ai-app
+      app: ai-app
   template:
     metadata:
       labels:
-        app: AI-app
+        app: ai-app
     spec:
       containers:
       - name: api
-        image: hardik0811/AI-app:latest
+        image: hardik0811/ai-app:latest
         ports:
         - containerPort: 8000
 
