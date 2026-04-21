@@ -4,7 +4,7 @@
 #  🦙 Ollama Chatbot Deployment (FastAPI + Ollama + Kubernetes)
 
 A production-style, Kubernetes-native AI chatbot system using **FastAPI + WebSockets + Ollama (TinyLlama)** with CI/CD-based Docker builds and scalable deployment architecture.
-
+<a href="https://hardik0811arora.hashnode.dev/building-a-kubernetes-hosted-ai-chatbot-with-ollama-fastapi-from-broken-to-working"><?xml version="1.0" encoding="UTF-8"?><img src="https://img.shields.io/badge/Hashnode-2962FF?style=for-the-badge&logo=hashnode&logoColor=white" />
 ---
 
 ## About Project
