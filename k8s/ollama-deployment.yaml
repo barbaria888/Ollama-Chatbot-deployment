@@ -1,5 +1,7 @@
+
 apiVersion: apps/v1
 kind: Deployment
+
 metadata:
   name: ollama
 
@@ -16,22 +18,6 @@ spec:
         app: ollama
 
     spec:
-      initContainers:
-      - name: pull-tinyllama
-        image: ollama/ollama
-        command:
-        - sh
-        - -c
-        - |
-          ollama serve &
-          sleep 10
-          ollama pull tinyllama
-          wait
-
-        volumeMounts:
-        - name: ollama-data
-          mountPath: /root/.ollama
-
       containers:
       - name: ollama
         image: ollama/ollama
@@ -42,10 +28,20 @@ spec:
         resources:
           requests:
             cpu: "100m"
-            memory: "256Mi"
+            memory: "768Mi"
           limits:
             cpu: "250m"
-            memory: "512Mi"
+            memory: "1200Mi"
+
+        lifecycle:
+          postStart:
+            exec:
+              command:
+              - /bin/sh
+              - -c
+              - |
+                sleep 10
+                ollama pull tinyllama
 
         volumeMounts:
         - name: ollama-data
