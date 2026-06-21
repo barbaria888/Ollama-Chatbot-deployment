@@ -20,11 +20,11 @@ spec:
 
         resources:
           limits:
-            memory: "6Gi"
-            cpu: "2"
+            memory: "512Mi"
+            cpu: "250m"
           requests:
-            memory: "3Gi"
-            cpu: "1"
+            memory: "256Mi"
+            cpu: "100m"
 
         volumeMounts:
         - mountPath: /root/.ollama
