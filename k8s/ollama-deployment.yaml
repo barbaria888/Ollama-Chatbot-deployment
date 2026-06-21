@@ -2,33 +2,54 @@ apiVersion: apps/v1
 kind: Deployment
 metadata:
   name: ollama
+
 spec:
   replicas: 1
+
   selector:
     matchLabels:
       app: ollama
+
   template:
     metadata:
       labels:
         app: ollama
+
     spec:
+      initContainers:
+      - name: pull-tinyllama
+        image: ollama/ollama
+        command:
+        - sh
+        - -c
+        - |
+          ollama serve &
+          sleep 10
+          ollama pull tinyllama
+          wait
+
+        volumeMounts:
+        - name: ollama-data
+          mountPath: /root/.ollama
+
       containers:
       - name: ollama
         image: ollama/ollama
+
         ports:
         - containerPort: 11434
 
         resources:
-          limits:
-            memory: "512Mi"
-            cpu: "250m"
           requests:
-            memory: "256Mi"
             cpu: "100m"
+            memory: "256Mi"
+          limits:
+            cpu: "250m"
+            memory: "512Mi"
 
         volumeMounts:
-        - mountPath: /root/.ollama
-          name: ollama-data
+        - name: ollama-data
+          mountPath: /root/.ollama
 
       volumes:
       - name: ollama-data
