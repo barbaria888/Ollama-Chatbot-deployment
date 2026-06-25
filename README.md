@@ -219,7 +219,17 @@ Install websocat:
 sudo apt-get install websocat
 
 ```
+#### Most of the times it failed i had to install from release binary
 
+
+```bash
+curl -L https://github.com/vi/websocat/releases/download/v1.12.0/websocat.x86_64-linux -o /usr/local/bin/websocat 
+```
+Make it executable
+
+```bash
+chmod +x /usr/local/bin/websocat
+```
 
 
 **macOS**
