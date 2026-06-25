@@ -36,9 +36,270 @@ TinyLlama Model (CPU inference)
 Streamed response back to client
 ```
 
+## 🚀 Quick Start (5 Minutes)
+
+
+
+Get the entire AI chatbot running on Kubernetes in just a few commands.
+
+
+
+### Step 1 — Clone the Repository
+
+
+
+```bash
+
+git clone https://github.com/barbaria888/Ollama-Chatbot-deployment.git
+
+cd Ollama-Chatbot-deployment
+
+```
+
+
+
 ---
 
+
+
+### Step 2 — Deploy the Kubernetes Stack
+
+
+
+Deploy Ollama, FastAPI, services, and networking resources:
+
+
+
+```bash
+
+kubectl apply -f k8s/
+
+```
+
+
+
+---
+
+
+
+### Step 3 — Verify the Deployment
+
+
+
+Check that all pods are running successfully:
+
+
+
+```bash
+
+kubectl get pods
+
+```
+
+
+
+Expected output:
+
+
+
+```text
+
+NAME                       STATUS
+
+ollama-xxxxx               Running
+
+ai-app-xxxxx               Running
+
+ai-app-yyyyy               Running
+
+```
+
+
+
+> First-time image pulls may take a few minutes.
+
+
+
+---
+
+
+
+### Step 4 — Download the AI Model
+
+
+
+Pull the TinyLlama model into the Ollama runtime:
+
+
+
+```bash
+
+kubectl exec -it deploy/ollama -- ollama pull tinyllama
+
+```
+
+
+
+Verify available models:
+
+
+
+```bash
+
+kubectl exec -it deploy/ollama -- ollama list
+
+```
+
+
+
+---
+
+
+
+### Step 5 — Expose the API Locally
+
+
+
+Create a local tunnel to the FastAPI service:
+
+
+
+```bash
+
+kubectl port-forward svc/ai-api-service 8000:80
+
+```
+
+
+
+⚠️ Keep this terminal running while using the chatbot.
+
+
+
+Your endpoints are now available at:
+
+
+
+```text
+
+http://localhost:8000
+
+ws://localhost:8000/ws/chat
+
+```
+
+
+
+---
+
+
+
+## 💬 Demo the Chatbot
+
+
+
+Open a **new terminal window**.
+
+
+
+### Option A — Using websocat (Recommended)
+
+
+
+Install websocat:
+
+
+
+**Ubuntu / Debian**
+
+
+
+```bash
+
+sudo apt-get install websocat
+
+```
+
+
+
+**macOS**
+
+
+
+```bash
+
+brew install websocat
+
+```
+
+
+
+Connect to the chatbot:
+
+
+
+```bash
+
+websocat ws://localhost:8000/ws/chat
+
+```
+
+
+
+Ask a question:
+
+
+
+```text
+
+Explain Kubernetes in simple terms
+
+```
+
+
+
+The AI response will stream back in real time, similar to ChatGPT.
+
+
+
+---
+
+
+
+### Option B — Browser WebSocket Test
+
+
+
+```javascript
+
+const ws = new WebSocket("ws://localhost:8000/ws/chat");
+
+
+
+ws.onmessage = (e) => console.log("AI:", e.data);
+
+ws.onopen = () => ws.send("Explain Kubernetes in simple terms");
+
+```
+
+
+
+---
+
+
+
+### 🎉 Success
+
+
+
+If you receive a streamed response from TinyLlama, your Kubernetes-native AI chatbot is fully operational.
+
+
+---
+
+
 ## Features
+
 
 * Real-time token streaming (ChatGPT-like typing effect)
 *  Fully Kubernetes-deployed AI stack
